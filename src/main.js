@@ -2,7 +2,7 @@ import { fetchPhotos } from './js/pixabay-api';
 import {
   clearGallery,
   fillGallery,
-  toggleLoader,
+  scrollGallery,
   showErrorMessage,
   showElement,
 } from './js/render-functions';
@@ -13,42 +13,16 @@ class GalleryController {
   #query;
   #gallery;
   #loader;
-  #pageCounter;
 
   constructor() {
     this.form = document.querySelector('.form');
-    this.leftArrow = document.querySelector('.left');
-    this.rightArrow = document.querySelector('.right');
+    this.loadMoreButton = document.querySelector('.load-more');
     this.#gallery = document.querySelector('.gallery');
     this.#loader = document.querySelector('.loader');
-    this.#pageCounter = document.querySelector('.page');
 
     this.#currentPage = 0;
     this.#totalPages = 0;
     this.#query = '';
-  }
-
-  fetchNext() {
-    if (!this.#totalPages) {
-      this.#currentPage = 1;
-      this.#fetch();
-    }
-
-    if (this.#currentPage <= this.#totalPages) {
-      this.#currentPage++;
-      this.#fetch();
-    }
-  }
-
-  fetchPrevious() {
-    if (!this.#totalPages) {
-      return;
-    }
-
-    if (this.#currentPage > 1) {
-      this.#currentPage--;
-      this.#fetch();
-    }
   }
 
   setupQuery() {
@@ -64,62 +38,55 @@ class GalleryController {
   }
 
   reset() {
-    showElement(this.leftArrow, false);
-    showElement(this.rightArrow, false);
-    showElement(this.#pageCounter, false);
-    this.#pageCounter.textContent = '';
+    clearGallery(this.#gallery);
+
+    showElement(this.loadMoreButton, false);
 
     this.#query = '';
     this.#currentPage = 0;
     this.#totalPages = 0;
   }
 
-  #fetch() {
-    showElement(this.leftArrow, false);
-    showElement(this.rightArrow, false);
-    showElement(this.#pageCounter, false);
-    this.#pageCounter.textContent = '';
+  async fetchMore() {
+    showElement(this.loadMoreButton, false);
+    showElement(this.#loader, true);
 
-    clearGallery(this.#gallery);
-    toggleLoader(this.#loader);
+    this.#currentPage++;
 
-    fetchPhotos(this.#query, this.#currentPage)
-      .then(photosData => {
-        toggleLoader(this.#loader);
-        if (!this.#totalPages) {
-          const total = parseInt(photosData.totalHits);
-          this.#totalPages = Math.floor(total / 9) + (total % 9 > 0 ? 1 : 0);
-        }
+    try {
+      const data = await fetchPhotos(this.#query, this.#currentPage);
+      if (data.status !== 200) {
+        throw new Error(`Failed to load images, error code: ${data.status}`);
+      }
 
-        if (this.#totalPages > 0) {
-          fillGallery(this.#gallery, photosData.hits);
-        } else {
-          throw new Error(
-            'Sorry, there are no images matching your search query. Please try again!'
-          );
-        }
+      showElement(this.#loader, false);
 
-        this.#pageCounter.textContent = `${this.#currentPage}  of  ${
-          this.#totalPages
-        }`;
-        showElement(this.#pageCounter, true);
+      const photosData = data.data;
+      if (!this.#totalPages) {
+        const total = parseInt(photosData.totalHits);
+        this.#totalPages = Math.floor(total / 9) + (total % 9 > 0 ? 1 : 0);
+      }
 
-        if (this.#totalPages > 1) {
-          if (this.#currentPage === this.#totalPages) {
-            showElement(this.rightArrow, false);
-            showElement(this.leftArrow, true);
-          } else if (this.#currentPage === 1) {
-            showElement(this.leftArrow, false);
-            showElement(this.rightArrow, true);
-          } else {
-            showElement(this.rightArrow, true);
-            showElement(this.leftArrow, true);
-          }
-        }
-      })
-      .catch(error => {
-        showErrorMessage(error.message);
-      });
+      if (this.#totalPages > 0) {
+        fillGallery(this.#gallery, photosData.hits);
+      } else {
+        throw new Error(
+          'Sorry, there are no images matching your search query. Please try again!'
+        );
+      }
+
+      if (this.#currentPage === this.#totalPages) {
+        showElement(this.loadMoreButton, false);
+      } else {
+        showElement(this.loadMoreButton, true);
+      }
+
+      if (this.#currentPage > 1) {
+        scrollGallery(this.#gallery);
+      }
+    } catch (error) {
+      showErrorMessage(error.message);
+    }
   }
 }
 
@@ -130,14 +97,10 @@ galleryController.form.addEventListener('submit', event => {
 
   galleryController.reset();
   if (galleryController.setupQuery()) {
-    galleryController.fetchNext();
+    galleryController.fetchMore();
   }
 });
 
-galleryController.rightArrow.addEventListener('click', _ => {
-  galleryController.fetchNext();
-});
-
-galleryController.leftArrow.addEventListener('click', _ => {
-  galleryController.fetchPrevious();
+galleryController.loadMoreButton.addEventListener('click', () => {
+  galleryController.fetchMore();
 });

@@ -1,23 +1,23 @@
-import { showErrorMessage } from './render-functions';
+import axios from 'axios';
 
-const API_KEY = '45271330-704da2140a32d702981ddfad2';
+axios.defaults.baseURL = 'https://pixabay.com';
 
-export const fetchPhotos = (query, page) => {
-  return fetch(
-    `https://pixabay.com/api/?key=${API_KEY}&q=${encodeURIComponent(
-      query
-    )}&orientation=horizontal&safesearch=true&per_page=9&page=${page}`
-  )
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(
-          `Failed to load images, error code: ${response.status}`
-        );
-      }
+export const fetchPhotos = async (query, page) => {
+  const config = {
+    params: {
+      key: '45271330-704da2140a32d702981ddfad2',
+      q: query,
+      safesearch: true,
+      orientation: 'horizontal',
+      page: page,
+      per_page: 15,
+    },
+  };
 
-      return response.json();
-    })
-    .catch(error => {
-      showErrorMessage(error.message);
-    });
+  return axios.get('/api', config);
+  // return fetch(
+  //   `https://pixabay.com/api/?key=${API_KEY}&q=${encodeURIComponent(
+  //     query
+  //   )}&orientation=horizontal&safesearch=true&per_page=9&page=${page}`
+  // )
 };

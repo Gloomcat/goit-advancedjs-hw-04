@@ -1,5 +1,6 @@
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
+
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 
@@ -16,18 +17,10 @@ const refreshLightbox = () => {
   lightbox.refresh();
 };
 
-export const toggleLoader = loader => {
-  if (loader.classList.contains('hidden')) {
-    showElement(loader, true);
-  } else {
-    showElement(loader, false);
-  }
-};
-
 export const showElement = (el, show) => {
-  if (show) {
+  if (show && el.classList.contains('hidden')) {
     el.classList.remove('hidden');
-  } else {
+  } else if (!show && !el.classList.contains('hidden')) {
     el.classList.add('hidden');
   }
 };
@@ -78,11 +71,22 @@ export const fillGallery = (gallery, photosList) => {
         </div>
         `;
   });
-  gallery.innerHTML = galleryItems.join('\n');
+  gallery.innerHTML += galleryItems.join('\n');
   refreshLightbox();
 };
 
 export const clearGallery = gallery => {
   gallery.innerHTML = '';
   refreshLightbox();
+};
+
+export const scrollGallery = gallery => {
+  const galleryItem = gallery.querySelector('div');
+  const scrollValue = galleryItem.getBoundingClientRect().height * 2;
+  const options = {
+    left: 0,
+    top: scrollValue,
+    behavior: 'smooth',
+  };
+  window.scrollBy(options);
 };
