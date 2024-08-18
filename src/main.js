@@ -3,7 +3,7 @@ import {
   clearGallery,
   fillGallery,
   scrollGallery,
-  showErrorMessage,
+  showMessage,
   showElement,
 } from './js/render-functions';
 
@@ -29,7 +29,10 @@ class GalleryController {
     const q = this.form.querySelector('input[name="query"]').value.trim();
     this.form.reset();
     if (!q) {
-      showErrorMessage('Search request should not be empty. Please try again!');
+      showMessage(
+        'Search request should not be empty. Please try again!',
+        'error'
+      );
       return false;
     }
 
@@ -64,7 +67,7 @@ class GalleryController {
       const photosData = data.data;
       if (!this.#totalPages) {
         const total = parseInt(photosData.totalHits);
-        this.#totalPages = Math.floor(total / 9) + (total % 9 > 0 ? 1 : 0);
+        this.#totalPages = Math.floor(total / 15) + (total % 15 > 0 ? 1 : 0);
       }
 
       if (this.#totalPages > 0) {
@@ -77,6 +80,10 @@ class GalleryController {
 
       if (this.#currentPage === this.#totalPages) {
         showElement(this.loadMoreButton, false);
+        showMessage(
+          "We're sorry, but you've reached the end of search results.",
+          'info'
+        );
       } else {
         showElement(this.loadMoreButton, true);
       }
@@ -85,7 +92,7 @@ class GalleryController {
         scrollGallery(this.#gallery);
       }
     } catch (error) {
-      showErrorMessage(error.message);
+      showMessage(error.message, 'error');
     }
   }
 }

@@ -25,7 +25,7 @@ export const showElement = (el, show) => {
   }
 };
 
-export const showErrorMessage = errorMessage => {
+export const showMessage = (message, messageType) => {
   let settings = {
     titleSize: '16px',
     titleLineHeight: '24px',
@@ -35,12 +35,18 @@ export const showErrorMessage = errorMessage => {
     messageColor: '#FFF',
     theme: 'dark',
     position: 'topRight',
-    title: 'Error',
-    backgroundColor: '#EF4040',
-    message: errorMessage,
+    message: message,
   };
 
-  iziToast.error(settings);
+  if (messageType == 'error') {
+    settings.title = 'Error';
+    settings.backgroundColor = '#EF4040';
+    iziToast.error(settings);
+  } else if (messageType == 'info') {
+    settings.title = 'Info';
+    settings.backgroundColor = '#4E75FF';
+    iziToast.info(settings);
+  }
 };
 
 export const fillGallery = (gallery, photosList) => {
